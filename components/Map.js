@@ -1,13 +1,67 @@
-import { MapView } from 'react-native-maps';
+import MapView, {Marker} from "react-native-maps"
+import { StyleSheet, Text, View } from "react-native";
+import { getAll  } from "../firebase";
+import { useEffect, useState } from "react";
 
-export default class Map extends Component<Props> {
+const Map = () => {
+  const [cities, setCities] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  async function populate() {
+    const cities = await getAll("cities")
+    return setCities(cities)
+  }
+
+  useEffect(() => {
+    if(!cities) {
+      populate();
+    }
+    if(cities) {
+      setLoading(false);
+    }
+  }, [cities])
+
   return (
-    <MapView
-      style={{flex: 1}}
-      region={{          latitude: 42.882004,          longitude: 74.582748,          latitudeDelta: 0.0922,          longitudeDelta: 0.0421        }}
-      showsUserLocation={true}
-    />
+    loading ? (
+      <View style={styles.loading}>
+        <Text>Chargement des villes</Text>
+      </View>
+
+      ) :
+    (<View style={styles.container}>
+      {/*Render our MapView*/}
+      <MapView
+        style={styles.map}
+      >
+        {cities.map((city, index)=> (
+          <Marker
+            key={index}
+            coordinate={{ latitude: city.lat, longitude: city.lng }}
+            title={city.name}
+          />
+        ) )}
+      </MapView>
+    </View>)
   )
 }
+
+const styles = StyleSheet.create(
+  {
+    loading: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    container: {
+      ...StyleSheet.absoluteFillObject,
+      flex: 1, //the container will fill the whole screen.
+      justifyContent: "flex-end",
+      alignItems: "center",
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
+  },
+);
 
 export default Map;

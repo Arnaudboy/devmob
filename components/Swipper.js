@@ -1,13 +1,18 @@
 import Card from "./Card";
 import { useRef, useState } from "react";
-import {Animated, PanResponder, View, Vibration} from "react-native";
+import { Animated, PanResponder, View, Vibration, StyleSheet } from "react-native";
 import { addCity } from "../firebase";
-import data from "../Data/Cities.json"
+import data from "../Data/Cities.json";
+import axios from "axios";
 
-const Swipper = () => {
+const Swipper = ({navigation}) => {
   const [city, setCity] = useState(data.cities[Math.floor(Math.random()*data.cities.length)])
   const [allowAdding, setAllowAdding] = useState(false)
+  const [key] = useState("AIzaSyCIn8M1Rsiq7FliMwo6M1BJVRJRnlbbUfs")
 
+  const onNavigate = () => {
+    navigation.navigate("Map");
+  };
   let pan = useRef(new Animated.ValueXY()).current;
   let panResponder = useRef(
         PanResponder.create({
@@ -43,15 +48,22 @@ const Swipper = () => {
     ).current;
 
   if (allowAdding) {
-    addCity(city)
-    setAllowAdding(false)
-    setCity(data.cities[Math.floor(Math.random() * data.cities.length)])
+    axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${city.name}&key=${key}`)
+      .then(res => {
+        const location = res.data.results[0].geometry.location
+        addCity({...city, lat:location.lat, lng:location.lng})
+
+      }).finally(
+      setAllowAdding(false),
+      setCity(data.cities[Math.floor(Math.random() * data.cities.length)]),
+    )
+
     //Android apps should request the android.permission.VIBRATE permission
-    // by adding <uses-permission android:name="android.permission.VIBRATE"/> to AndroidManifest.xml.
+    //by adding <uses-permission android:name="android.permission.VIBRATE"/> to AndroidManifest.xml.
     Vibration.vibrate(100,100,50)
   }
     return (
-        <View>
+        <View style={styles.container}>
             <Animated.View
                 style={{
                     transform: [{translateX: pan.x}, {translateY: pan.y}]
@@ -62,5 +74,15 @@ const Swipper = () => {
         </View>
 )
 }
+
+const styles = StyleSheet.create(
+  {
+    container: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+  },
+);
 
 export default Swipper;

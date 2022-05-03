@@ -40,6 +40,6 @@ export async function getOne(name, id) {
 }
 
 export async function addCity(city) {
-  const prom = await addDoc(collection(db, "cities"), { city: city.name, country: city.country });
+  const prom = await addDoc(collection(db, "cities"), { city: city.name, country: city.country, lat: city.lat, lng: city.lng });
   return prom;
 }
